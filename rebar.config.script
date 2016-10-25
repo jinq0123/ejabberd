@@ -97,11 +97,16 @@ CPPFLags = proplists:get_value(cppflags, Cfg, ""),
 LDFLags = proplists:get_value(ldflags, Cfg, ""),
 
 ConfigureCmd = fun(Pkg, Flags) ->
+    case os:type() of
+        {win32, _} -> 
+                       {'get-deps', ""};
+        _ ->
                        {'get-deps',
                         "sh -c 'cd deps/" ++ Pkg ++
                             " && CFLAGS=\""++ CFLags ++"\" CPPFLAGS=\""++ CPPFLags ++"\" LDFLAGS=\""++ LDFLags ++"\"" ++
                             " ./configure " ++ Flags ++ "'"}
-               end,
+    end  % case
+end,
 
 Conf = ProcessVars(ProcessVars, CONFIG, []),
 

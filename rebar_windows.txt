@@ -1,0 +1,30 @@
+rebar get-deps
+出现以下错误：
+
+Cloning into 'p1_oauth2'...
+Pulling luerl from {git,"https://github.com/rvirding/luerl",{tag,"v0.2"}}
+Cloning into 'luerl'...
+'sh' 不是内部或外部命令，也不是可运行的程序
+或批处理文件。
+ERROR: Command ['get-deps'] failed!
+
+set PATH=C:\Program Files\Git\bin;%PATH%
+
+==> ejabberd_jinq0123 (get-deps)
+'CFLAGS' 不是内部或外部命令，也不是可运行的程序
+或批处理文件。
+ERROR: Command ['get-deps'] failed!
+
+Windows编译ejabberd 
+http://blog.csdn.net/jq0123/article/details/52224320
+
+E:\Git\ejabberd_jinq0123>call rebar compile skip_deps=true
+==> rel (compile)
+==> ejabberd_jinq0123 (compile)
+Compiled asn1/XmppAddr.asn1
+Compiled src/eldap_filter_yecc.yrl
+e:/Git/ejabberd_jinq0123/src/ejabberd_config.erl:none: undefined parse transform
+ 'lager_transform'
+ERROR: compile failed while processing E:/Git/ejabberd_jinq0123: rebar_abort
+
+用 rebar compile 编译 lager. 其他无法编译的可忽略。
