@@ -420,6 +420,13 @@ acl:
   ##     - "aleksey@localhost"
   ##     - "ermine@example.org"
   ##
+  ## Game master has some special privileges.
+  ##
+  ## game_master:
+  ##   user:
+  ##     - "game_master_1@localhost"
+  ##     - "game_master_2@localhost"
+  ##
   ## Blocked users
   ##
   ## blocked:
@@ -661,6 +668,12 @@ modules:
     ##
     ##   access_from: deny
     ##   access: register
+    ##
+    ## Allow some user register accounts without registration_timeout limit.
+    ##
+    ##   access_from_without_time_limit:
+    ##     - allow: game_master
+    ##
   mod_roster: {}
   mod_shared_roster: {}
   mod_stats: {}

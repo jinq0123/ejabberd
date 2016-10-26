@@ -34,7 +34,7 @@
 -behaviour(gen_mod).
 
 -export([start/2, stop/1, stream_feature_register/2,
-	 unauthenticated_iq_register/4, try_register/5,
+	 unauthenticated_iq_register/4,
 	 process_iq/3, send_registration_notifications/3,
 	 transform_options/1, transform_module_options/1,
 	 mod_opt_type/1, opt_type/1, depends/2]).
@@ -352,7 +352,7 @@ try_register_or_set_password(User, Server, Password,
       _ when CaptchaSucceed ->
 	  case check_from(From, Server) of
 	    allow ->
-		case try_register(User, Server, Password, Source, Lang)
+		case try_register(User, Server, Password, From, Source, Lang)
 		    of
 		  ok -> IQ#iq{type = result, sub_el = []};
 		  {error, Error} ->
@@ -399,7 +399,7 @@ try_set_password(User, Server, Password, IQ, SubEl,
 		sub_el = [SubEl, ?ERRT_NOT_ACCEPTABLE(Lang, ErrText)]}
     end.
 
-try_register(User, Server, Password, SourceRaw, Lang) ->
+try_register(User, Server, Password, From, SourceRaw, Lang) ->
     case jid:is_nodename(User) of
       false -> {error, ?ERRT_BAD_REQUEST(Lang, <<"Malformed username">>)};
       _ ->
@@ -415,7 +415,11 @@ try_register(User, Server, Password, SourceRaw, Lang) ->
 	    {_, deny} -> {error, ?ERRT_FORBIDDEN(Lang, <<"Denied by ACL">>)};
 	    {allow, allow} ->
 		Source = may_remove_resource(SourceRaw),
-		case check_timeout(Source) of
+		CheckTimeout = case check_from_without_time_limit(From, Server) of
+			allow -> true;
+			_ -> check_timeout(Source)
+		end,
+		case CheckTimeout of
 		  true ->
 		      case is_strong_password(Server, Password) of
 			true ->
@@ -531,6 +535,12 @@ check_from(#jid{user = <<"">>, server = <<"">>},
     allow;
 check_from(JID, Server) ->
     Access = gen_mod:get_module_opt(Server, ?MODULE, access_from,
+                                    fun(A) -> A end,
+                                    none),
+    acl:match_rule(Server, Access, JID).
+
+check_from_without_time_limit(JID, Server) ->
+    Access = gen_mod:get_module_opt(Server, ?MODULE, access_from_without_time_limit,
                                     fun(A) -> A end,
                                     none),
     acl:match_rule(Server, Access, JID).
@@ -742,6 +752,8 @@ mod_opt_type(access) ->
     fun acl:access_rules_validator/1;
 mod_opt_type(access_from) ->
     fun (A) when is_atom(A) -> A end;
+mod_opt_type(access_from_without_time_limit) ->
+    fun acl:access_rules_validator/1;
 mod_opt_type(captcha_protected) ->
     fun (B) when is_boolean(B) -> B end;
 mod_opt_type(ip_access) ->
@@ -761,7 +773,7 @@ mod_opt_type(welcome_message) ->
 	    {iolist_to_binary(S), iolist_to_binary(B)}
     end;
 mod_opt_type(_) ->
-    [access, access_from, captcha_protected, ip_access,
+    [access, access_from, access_from_without_time_limit, captcha_protected, ip_access,
      iqdisc, password_strength, registration_watchers,
      welcome_message].
 
